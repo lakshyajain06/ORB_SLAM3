@@ -3,6 +3,8 @@ SET(CMAKE_LEGACY_CYGWIN_WIN32 0)
 
 PROJECT(g2o)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wno-error=array-bounds -Wno-array-bounds")
+
 SET(g2o_C_FLAGS)
 SET(g2o_CXX_FLAGS)
 

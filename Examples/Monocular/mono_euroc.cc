@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     for (seq = 0; seq<num_seq; seq++)
     {
         cout << "Loading images for sequence " << seq << "...";
-        LoadImages(string(argv[(2*seq)+3]) + "/mav0/cam0/data", string(argv[(2*seq)+4]), vstrImageFilenames[seq], vTimestampsCam[seq]);
+        LoadImages(string(argv[(2*seq)+3]) + "/cam0/data", string(argv[(2*seq)+4]), vstrImageFilenames[seq], vTimestampsCam[seq]);
         cout << "LOADED!" << endl;
 
         nImages[seq] = vstrImageFilenames[seq].size();
@@ -112,7 +112,7 @@ int main(int argc, char **argv)
     #ifdef COMPILEDWITHC11
                 std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
     #else
-                std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
+                std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
     #endif
 #endif
                 int width = im.cols * imageScale;
@@ -122,7 +122,7 @@ int main(int argc, char **argv)
     #ifdef COMPILEDWITHC11
                 std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
     #else
-                std::chrono::monotonic_clock::time_point t_End_Resize = std::chrono::monotonic_clock::now();
+                std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
     #endif
                 t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
                 SLAM.InsertResizeTime(t_resize);
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
     #else
-            std::chrono::monotonic_clock::time_point t1 = std::chrono::monotonic_clock::now();
+            std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
     #endif
 
             // Pass the image to the SLAM system
@@ -142,7 +142,7 @@ int main(int argc, char **argv)
     #ifdef COMPILEDWITHC11
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
     #else
-            std::chrono::monotonic_clock::time_point t2 = std::chrono::monotonic_clock::now();
+            std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
     #endif
 
 #ifdef REGISTER_TIMES
