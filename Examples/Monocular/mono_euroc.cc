@@ -33,6 +33,7 @@ void LoadImages(const string &strImagePath, const string &strPathTimes,
 
 int main(int argc, char **argv)
 {  
+
     // MODIFIED: Changed arg check for specific input format
     if(argc != 5)
     {
@@ -48,6 +49,9 @@ int main(int argc, char **argv)
     // Construct paths based on instructions
     string path_images_dir = path_data + "/" + run_name + "/cam0/data";
     string path_times_file = path_data + "/" + run_name + "/cam0/times.txt";
+
+
+    std::cout << "Starting orbslam for " << path_images_dir << std::endl;
     
     // Output directory handling
     string output_root = "output";
