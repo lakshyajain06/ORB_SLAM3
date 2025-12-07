@@ -20,6 +20,7 @@
 #include<algorithm>
 #include<fstream>
 #include<chrono>
+#include<sys/stat.h> // Added to check/create directory
 
 #include<opencv2/core/core.hpp>
 
@@ -32,21 +33,25 @@ void LoadImages(const string &strImagePath, const string &strPathTimes,
 
 int main(int argc, char **argv)
 {  
-    if(argc < 5)
+    // MODIFIED: Changed arg check for specific input format
+    if(argc != 5)
     {
-        cerr << endl << "Usage: ./mono_euroc path_to_vocabulary path_to_settings path_to_sequence_folder_1 path_to_times_file_1 (path_to_image_folder_2 path_to_times_file_2 ... path_to_image_folder_N path_to_times_file_N) (trajectory_file_name)" << endl;
+        cerr << endl << "Usage: ./mono_euroc path_to_vocabulary path_to_settings path_to_data run_name" << endl;
         return 1;
     }
 
-    const int num_seq = (argc-3)/2;
-    cout << "num_seq = " << num_seq << endl;
-    bool bFileName= (((argc-3) % 2) == 1);
-    string file_name;
-    if (bFileName)
-    {
-        file_name = string(argv[argc-1]);
-        cout << "file name: " << file_name << endl;
-    }
+    // MODIFIED: Hardcoded single sequence assumption and path parsing
+    const int num_seq = 1; 
+    string path_data = string(argv[3]);
+    string run_name = string(argv[4]);
+    
+    // Construct paths based on instructions
+    string path_images_dir = path_data + "/" + run_name + "/cam0/data";
+    string path_times_file = path_data + "/" + run_name + "/cam0/times.txt";
+    
+    // Output directory handling
+    string output_root = "output";
+    string output_dir = output_root + "/" + run_name;
 
     // Load all sequences:
     int seq;
@@ -62,7 +67,8 @@ int main(int argc, char **argv)
     for (seq = 0; seq<num_seq; seq++)
     {
         cout << "Loading images for sequence " << seq << "...";
-        LoadImages(string(argv[(2*seq)+3]) + "/cam0/data", string(argv[(2*seq)+4]), vstrImageFilenames[seq], vTimestampsCam[seq]);
+        // MODIFIED: Use the constructed paths
+        LoadImages(path_images_dir, path_times_file, vstrImageFilenames[seq], vTimestampsCam[seq]);
         cout << "LOADED!" << endl;
 
         nImages[seq] = vstrImageFilenames[seq].size();
@@ -169,36 +175,26 @@ int main(int argc, char **argv)
                 usleep((T-ttrack)*1e6); // 1e6
             }
         }
-
-        if(seq < num_seq - 1)
-        {
-            string kf_file_submap =  "./SubMaps/kf_SubMap_" + std::to_string(seq) + ".txt";
-            string f_file_submap =  "./SubMaps/f_SubMap_" + std::to_string(seq) + ".txt";
-            SLAM.SaveTrajectoryEuRoC(f_file_submap);
-            SLAM.SaveKeyFrameTrajectoryEuRoC(kf_file_submap);
-
-            cout << "Changing the dataset" << endl;
-
-            SLAM.ChangeDataset();
-        }
-
+        
+        // Removed intermediate submap saving for single sequence logic, 
+        // or you can leave it if submaps are desired.
     }
     // Stop all threads
     SLAM.Shutdown();
 
+    // MODIFIED: Ensure output directory exists
+    struct stat info;
+    if( stat( output_root.c_str(), &info ) != 0 ) mkdir(output_root.c_str(), 0777);
+    if( stat( output_dir.c_str(), &info ) != 0 ) mkdir(output_dir.c_str(), 0777);
+
+    // MODIFIED: Save outputs to output/runname
+    SLAM.SavePointCloud(output_dir); 
+
     // Save camera trajectory
-    if (bFileName)
-    {
-        const string kf_file =  "kf_" + string(argv[argc-1]) + ".txt";
-        const string f_file =  "f_" + string(argv[argc-1]) + ".txt";
-        SLAM.SaveTrajectoryEuRoC(f_file);
-        SLAM.SaveKeyFrameTrajectoryEuRoC(kf_file);
-    }
-    else
-    {
-        SLAM.SaveTrajectoryEuRoC("CameraTrajectory.txt");
-        SLAM.SaveKeyFrameTrajectoryEuRoC("KeyFrameTrajectory.txt");
-    }
+    const string kf_file =  output_dir + "/KeyFrameTrajectory.txt";
+    const string f_file =  output_dir + "/CameraTrajectory.txt";
+    SLAM.SaveTrajectoryEuRoC(f_file);
+    SLAM.SaveKeyFrameTrajectoryEuRoC(kf_file);
 
     return 0;
 }

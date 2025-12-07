@@ -520,6 +520,7 @@ void System::Shutdown()
     }
 
     cout << "Shutdown" << endl;
+    cout << endl;
 
     mpLocalMapper->RequestFinish();
     mpLoopCloser->RequestFinish();
@@ -564,6 +565,72 @@ void System::Shutdown()
 bool System::isShutDown() {
     unique_lock<mutex> lock(mMutexReset);
     return mbShutDown;
+}
+
+void System::SavePointCloud(const std::string &folder)
+{
+    unique_lock<mutex> lock(mMutexState);
+
+    std::cout << "Saving Pointcloud..." << std::endl;
+
+    // Get all maps
+    std::vector<Map*> maps = mpAtlas->GetAllMaps();
+    if (maps.empty())
+    {
+        std::cout << "[SaveEachMapPLY] No maps found\n";
+        return;
+    }
+
+    // Process each map
+    for (size_t id = 0; id < maps.size(); id++)
+    {
+        Map* pMap = maps[id];
+        if (!pMap) continue;
+
+        std::vector<MapPoint*> points = pMap->GetAllMapPoints();
+
+        // Count valid points
+        size_t count = 0;
+        for (auto mp : points)
+            if (mp && !mp->isBad()) count++;
+
+        // Prepare filename
+        std::string filename = folder + "/map_" + std::to_string(id) + ".ply";
+
+        std::ofstream f(filename);
+        if (!f.is_open())
+        {
+            std::cerr << "[SaveEachMapPLY] Cannot open " << filename << std::endl;
+            continue;
+        }
+
+        // Write PLY header
+        f << "ply\nformat ascii 1.0\n";
+        f << "element vertex " << count << "\n";
+        f << "property float x\n";
+        f << "property float y\n";
+        f << "property float z\n";
+        f << "end_header\n";
+
+        // Write points
+        for (auto mp : points)
+        {
+            if (!mp || mp->isBad()) continue;
+
+           Eigen::Vector3f pos_eigen = mp->GetWorldPos();
+            f << pos_eigen[0] << " "
+              << pos_eigen[1] << " "
+              << pos_eigen[2] << "\n";
+        }
+
+        f.close();
+
+        std::cout << "[SaveEachMapPLY] Saved map " << id
+                  << " with " << count << " points to " << filename << "\n";
+    }
+
+    std::cout << "[SaveEachMapPLY] Completed saving " 
+              << maps.size() << " maps.\n";
 }
 
 void System::SaveTrajectoryTUM(const string &filename)
