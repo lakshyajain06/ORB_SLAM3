@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 project(ORB_SLAM3)
 
 IF(NOT CMAKE_BUILD_TYPE)
@@ -384,3 +384,29 @@ if(realsense2_FOUND)
             Examples_old/Stereo-Inertial/stereo_inertial_realsense_D435i.cc)
     target_link_libraries(stereo_inertial_realsense_D435i_old ${PROJECT_NAME})
 endif()
+
+# --- PYTHON BINDINGS ---
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+
+# Attempt to find pybind11
+execute_process(
+    COMMAND "${Python3_EXECUTABLE}" -c "import pybind11; print(pybind11.get_cmake_dir())"
+    OUTPUT_VARIABLE _pybind11_dir
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+list(APPEND CMAKE_PREFIX_PATH "${_pybind11_dir}")
+find_package(pybind11 REQUIRED)
+
+# Create the python library "orbslam"
+pybind11_add_module(orbslam src/PythonBindings.cc)
+
+# Link to the main ORB_SLAM3 library
+# NOTE: ${PROJECT_NAME} is usually "ORB_SLAM3"
+target_link_libraries(orbslam PUBLIC ${PROJECT_NAME}) 
+
+target_include_directories(orbslam PRIVATE
+    ${PYTHON_INCLUDE_DIRS}
+    include
+    include/CameraModels
+    Thirdparty/Sophus
+)
