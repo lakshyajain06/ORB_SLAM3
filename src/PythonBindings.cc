@@ -121,7 +121,7 @@ PYBIND11_MODULE(orbslam, m) {
         // })
 
         // MODES & SHUTDOWN
-        .def("activate_localization", &ORB_SLAM3::System::ActivateLocalizationMode)
-        .def("deactivate_localization", &ORB_SLAM3::System::DeactivateLocalizationMode)
-        .def("shutdown", &ORB_SLAM3::System::Shutdown);
+        .def("ActivateLocalization", &ORB_SLAM3::System::ActivateLocalizationMode)
+        .def("DeactivateLocalization", &ORB_SLAM3::System::DeactivateLocalizationMode)
+        .def("Shutdown", &ORB_SLAM3::System::Shutdown);
 }
