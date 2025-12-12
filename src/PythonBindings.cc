@@ -67,22 +67,31 @@ PYBIND11_MODULE(orbslam, m) {
         // })
 
         .def("TrackMonocular", [](ORB_SLAM3::System& self, const cv::Mat &im, const double &timestamp) {
-        std::vector<ORB_SLAM3::IMU::Point> vImuMeas; 
-        std::string filename = ""; 
+            std::vector<ORB_SLAM3::IMU::Point> vImuMeas; 
+            std::string filename = ""; 
 
-        // 1. Get the sophisticated object
-        Sophus::SE3f T_cw = self.TrackMonocular(im, timestamp, vImuMeas, filename);
-        
-        // 2. Convert manually to a flat vector (Safe & Simple)
-        Eigen::Matrix4f m = T_cw.matrix();
-        std::vector<float> pose_data;
-        pose_data.reserve(16);
-        
-        // Row-Major flattened order
-        for(int r=0; r<4; r++){
-            for(int c=0; c<4; c++){
-                pose_data.push_back(m(r,c));
-            }
+            // 1. Get the sophisticated object
+            Sophus::SE3f T_cw = self.TrackMonocular(im, timestamp, vImuMeas, filename);
+            
+            auto t = T_cw.translation();
+            
+            // std::cout << "--------------------------------" << std::endl << std::endl;
+            // std::cout << std::fixed << std::setprecision(4); // Formatting
+            // std::cout << "[C++ DEBUG] TS: " << timestamp 
+            //           << " | Pos: [" << t.x() << ", " << t.y() << ", " << t.z() << "]";
+
+            // std::cout << "--------------------------------" << std::endl << std::endl;
+
+            // 2. Convert manually to a flat vector (Safe & Simple)
+            Eigen::Matrix4f m = T_cw.matrix();
+            std::vector<float> pose_data;
+            pose_data.reserve(16);
+            
+            // Row-Major flattened order
+            for(int r=0; r<4; r++){
+                for(int c=0; c<4; c++){
+                    pose_data.push_back(m(r,c));
+                }
         }
 
         // Return simple vector (Python list)
@@ -123,5 +132,6 @@ PYBIND11_MODULE(orbslam, m) {
         // MODES & SHUTDOWN
         .def("ActivateLocalization", &ORB_SLAM3::System::ActivateLocalizationMode)
         .def("DeactivateLocalization", &ORB_SLAM3::System::DeactivateLocalizationMode)
-        .def("Shutdown", &ORB_SLAM3::System::Shutdown);
+        .def("Shutdown", &ORB_SLAM3::System::Shutdown)
+        .def("GetTrackingState", &ORB_SLAM3::System::GetTrackingState);
 }
